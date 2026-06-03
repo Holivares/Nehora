@@ -1125,11 +1125,12 @@ function renderLogoGrid() {
 
   // ── 1. Fond gris clair des formes (fill)
   const fillG = el('g', { transform: `translate(${tx},${ty}) scale(${scale})` });
-  sourceSvg.querySelectorAll('path,polygon,polyline,circle,ellipse,rect').forEach(shape => {
+  collectPaths(doc).forEach(({ el: shape, transform: pt }) => {
     const c = shape.cloneNode(true);
-    c.setAttribute('fill', '#e8e8ec');
+    c.setAttribute('fill', '#e0e0e8');
     c.setAttribute('stroke', 'none');
     c.removeAttribute('class'); c.removeAttribute('style');
+    if (pt) c.setAttribute('transform', pt);
     fillG.appendChild(c);
   });
   layerLogo.appendChild(fillG);
@@ -1179,12 +1180,13 @@ function renderLogoGrid() {
   // ── 3. Contours magenta (outlines)
   if (comp.outlines) {
     const outG = el('g', { transform: `translate(${tx},${ty}) scale(${scale})` });
-    sourceSvg.querySelectorAll('path,polygon,polyline,circle,ellipse,rect').forEach(shape => {
+    collectPaths(doc).forEach(({ el: shape, transform: pt }) => {
       const c = shape.cloneNode(true);
       c.setAttribute('fill', 'none');
       c.setAttribute('stroke', ac.outlines);
       c.setAttribute('stroke-width', lineW * 1.2);
       c.removeAttribute('class'); c.removeAttribute('style');
+      if (pt) c.setAttribute('transform', pt);
       outG.appendChild(c);
     });
     layerLogo.appendChild(outG);
@@ -1193,15 +1195,16 @@ function renderLogoGrid() {
   // ── 4. Cercles de courbure
   if (comp.circles) {
     const circG = el('g', { transform: `translate(${tx},${ty}) scale(${scale})` });
-    sourceSvg.querySelectorAll('path').forEach(path => {
+    collectPaths(doc).forEach(({ el: path, transform: pt }) => {
+      if (path.tagName !== 'path') return;
+      const g = pt ? el('g', { transform: pt }) : el('g');
       const segs = parseSvgPath(path.getAttribute('d') || '');
       segs.forEach(seg => {
         if (seg.type === 'C') {
-          // cercle passant par ancre de départ, control point et ancre d'arrivée
           const pts = [[seg.x0, seg.y0],[seg.cx2, seg.cy2],[seg.x, seg.y]];
           const cc = circumcircle(...pts);
           if (cc && cc.r > 2 && cc.r < svgW * 2) {
-            circG.appendChild(el('circle', {
+            g.appendChild(el('circle', {
               cx: cc.x, cy: cc.y, r: cc.r,
               fill: 'none', stroke: ac.handles,
               'stroke-width': lineW * 0.7, opacity: 0.35,
@@ -1209,6 +1212,7 @@ function renderLogoGrid() {
           }
         }
       });
+      circG.appendChild(g);
     });
     layerLogo.appendChild(circG);
   }
@@ -1216,24 +1220,25 @@ function renderLogoGrid() {
   // ── 5. Lignes poignées + poignées (handles)
   if (comp.handles) {
     const hG = el('g', { transform: `translate(${tx},${ty}) scale(${scale})` });
-    sourceSvg.querySelectorAll('path').forEach(path => {
+    collectPaths(doc).forEach(({ el: path, transform: pt }) => {
+      if (path.tagName !== 'path') return;
+      const g = pt ? el('g', { transform: pt }) : el('g');
       const segs = parseSvgPath(path.getAttribute('d') || '');
       segs.forEach(seg => {
-        if (seg.type === 'C') {
-          // ligne ancre-départ → cp1
-          hG.appendChild(el('line', { x1: seg.x0, y1: seg.y0, x2: seg.cx1, y2: seg.cy1,
-            stroke: ac.handles, 'stroke-width': lineW * 0.8, opacity: 0.7 }));
-          // ligne ancre-arrivée → cp2
-          hG.appendChild(el('line', { x1: seg.x, y1: seg.y, x2: seg.cx2, y2: seg.cy2,
-            stroke: ac.handles, 'stroke-width': lineW * 0.8, opacity: 0.7 }));
-          // cercle cp1
-          hG.appendChild(el('circle', { cx: seg.cx1, cy: seg.cy1, r: handleR,
+        if (seg.type === 'C' || seg.type === 'Q') {
+          g.appendChild(el('line', { x1: seg.x0, y1: seg.y0, x2: seg.cx1, y2: seg.cy1,
+            stroke: ac.handles, 'stroke-width': lineW * 0.8, opacity: 0.8 }));
+          g.appendChild(el('circle', { cx: seg.cx1, cy: seg.cy1, r: handleR,
             fill: 'white', stroke: ac.handles, 'stroke-width': lineW }));
-          // cercle cp2
-          hG.appendChild(el('circle', { cx: seg.cx2, cy: seg.cy2, r: handleR,
-            fill: 'white', stroke: ac.handles, 'stroke-width': lineW }));
+          if (seg.type === 'C') {
+            g.appendChild(el('line', { x1: seg.x, y1: seg.y, x2: seg.cx2, y2: seg.cy2,
+              stroke: ac.handles, 'stroke-width': lineW * 0.8, opacity: 0.8 }));
+            g.appendChild(el('circle', { cx: seg.cx2, cy: seg.cy2, r: handleR,
+              fill: 'white', stroke: ac.handles, 'stroke-width': lineW }));
+          }
         }
       });
+      hG.appendChild(g);
     });
     layerLogo.appendChild(hG);
   }
@@ -1241,18 +1246,21 @@ function renderLogoGrid() {
   // ── 6. Ancres carrées (anchors) — en dernier pour passer au-dessus
   if (comp.anchors) {
     const aG = el('g', { transform: `translate(${tx},${ty}) scale(${scale})` });
-    sourceSvg.querySelectorAll('path').forEach(path => {
+    collectPaths(doc).forEach(({ el: path, transform: pt }) => {
+      if (path.tagName !== 'path') return;
+      const g = pt ? el('g', { transform: pt }) : el('g');
       const segs = parseSvgPath(path.getAttribute('d') || '');
       segs.forEach(seg => {
         if (seg.x !== undefined) {
           const hs = anchorSize / 2;
-          aG.appendChild(el('rect', {
+          g.appendChild(el('rect', {
             x: seg.x - hs, y: seg.y - hs,
             width: anchorSize, height: anchorSize,
-            fill: '#3a3a4a', stroke: ac.outlines, 'stroke-width': lineW * 0.5,
+            fill: '#3c3c50', stroke: '#ffffff', 'stroke-width': lineW * 0.6,
           }));
         }
       });
+      aG.appendChild(g);
     });
     layerLogo.appendChild(aG);
   }
@@ -1268,85 +1276,189 @@ function circumcircle([x1,y1],[x2,y2],[x3,y3]) {
   return { x: x1+ux, y: y1+uy, r: Math.hypot(ux,uy) };
 }
 
-// SVG path parser — extracts anchor points and bezier handles
+// SVG path parser complet — gère M,L,H,V,C,S,Q,T,A,Z (absolu + relatif)
 function parseSvgPath(d) {
   if (!d) return [];
   const segments = [];
   const re = /([MmLlHhVvCcSsQqTtAaZz])([^MmLlHhVvCcSsQqTtAaZz]*)/g;
-  let match, cx = 0, cy = 0, startX = 0, startY = 0;
+  let match;
+  let cx = 0, cy = 0, startX = 0, startY = 0;
+  let lastCx2 = null, lastCy2 = null; // pour S/s
+  let lastQcx = null, lastQcy = null; // pour T/t
 
   function nums(str) {
-    return str.trim().split(/[\s,]+/).map(Number).filter(n => !isNaN(n));
+    const result = [];
+    const re2 = /[+-]?(?:\d+\.?\d*|\.\d+)(?:[eE][+-]?\d+)?/g;
+    let m;
+    while ((m = re2.exec(str)) !== null) result.push(parseFloat(m[0]));
+    return result;
   }
 
   while ((match = re.exec(d)) !== null) {
     const cmd = match[1];
     const a = nums(match[2]);
+    let i = 0;
+
+    const resetQ = () => { lastQcx = null; lastQcy = null; };
+    const resetS = () => { lastCx2 = null; lastCy2 = null; };
 
     switch (cmd) {
+      // ── Move
       case 'M':
-        for (let i = 0; i < a.length; i += 2) {
+        cx = a[0]; cy = a[1]; startX = cx; startY = cy;
+        segments.push({ type: 'M', x: cx, y: cy });
+        for (i = 2; i < a.length; i += 2) {
           cx = a[i]; cy = a[i+1];
-          segments.push({ type: 'M', x: cx, y: cy });
-          if (i === 0) { startX = cx; startY = cy; }
+          segments.push({ type: 'L', x: cx, y: cy });
         }
-        break;
+        resetS(); resetQ(); break;
       case 'm':
-        for (let i = 0; i < a.length; i += 2) {
+        cx += a[0]; cy += a[1]; startX = cx; startY = cy;
+        segments.push({ type: 'M', x: cx, y: cy });
+        for (i = 2; i < a.length; i += 2) {
           cx += a[i]; cy += a[i+1];
-          segments.push({ type: 'M', x: cx, y: cy });
-          if (i === 0) { startX = cx; startY = cy; }
+          segments.push({ type: 'L', x: cx, y: cy });
         }
-        break;
+        resetS(); resetQ(); break;
+
+      // ── Line
       case 'L':
-        for (let i = 0; i < a.length; i += 2) {
-          cx = a[i]; cy = a[i+1];
-          segments.push({ type: 'L', x: cx, y: cy });
-        }
-        break;
+        for (i = 0; i < a.length; i += 2) { cx = a[i]; cy = a[i+1]; segments.push({ type: 'L', x: cx, y: cy }); }
+        resetS(); resetQ(); break;
       case 'l':
-        for (let i = 0; i < a.length; i += 2) {
+        for (i = 0; i < a.length; i += 2) { cx += a[i]; cy += a[i+1]; segments.push({ type: 'L', x: cx, y: cy }); }
+        resetS(); resetQ(); break;
+      case 'H':
+        for (i = 0; i < a.length; i++) { cx = a[i]; segments.push({ type: 'L', x: cx, y: cy }); }
+        resetS(); resetQ(); break;
+      case 'h':
+        for (i = 0; i < a.length; i++) { cx += a[i]; segments.push({ type: 'L', x: cx, y: cy }); }
+        resetS(); resetQ(); break;
+      case 'V':
+        for (i = 0; i < a.length; i++) { cy = a[i]; segments.push({ type: 'L', x: cx, y: cy }); }
+        resetS(); resetQ(); break;
+      case 'v':
+        for (i = 0; i < a.length; i++) { cy += a[i]; segments.push({ type: 'L', x: cx, y: cy }); }
+        resetS(); resetQ(); break;
+
+      // ── Cubic Bezier
+      case 'C':
+        for (i = 0; i < a.length; i += 6) {
+          const x0 = cx, y0 = cy;
+          lastCx2 = a[i+2]; lastCy2 = a[i+3];
+          cx = a[i+4]; cy = a[i+5];
+          segments.push({ type: 'C', x0, y0, cx1: a[i], cy1: a[i+1], cx2: lastCx2, cy2: lastCy2, x: cx, y: cy });
+        }
+        resetQ(); break;
+      case 'c':
+        for (i = 0; i < a.length; i += 6) {
+          const x0 = cx, y0 = cy;
+          const acx1 = cx+a[i], acy1 = cy+a[i+1], acx2 = cx+a[i+2], acy2 = cy+a[i+3];
+          lastCx2 = acx2; lastCy2 = acy2;
+          cx += a[i+4]; cy += a[i+5];
+          segments.push({ type: 'C', x0, y0, cx1: acx1, cy1: acy1, cx2: acx2, cy2: acy2, x: cx, y: cy });
+        }
+        resetQ(); break;
+
+      // ── Smooth Cubic (S/s) — cp1 est le reflet de cp2 précédent
+      case 'S':
+        for (i = 0; i < a.length; i += 4) {
+          const x0 = cx, y0 = cy;
+          const cp1x = lastCx2 !== null ? 2*cx - lastCx2 : cx;
+          const cp1y = lastCy2 !== null ? 2*cy - lastCy2 : cy;
+          lastCx2 = a[i]; lastCy2 = a[i+1];
+          cx = a[i+2]; cy = a[i+3];
+          segments.push({ type: 'C', x0, y0, cx1: cp1x, cy1: cp1y, cx2: lastCx2, cy2: lastCy2, x: cx, y: cy });
+        }
+        resetQ(); break;
+      case 's':
+        for (i = 0; i < a.length; i += 4) {
+          const x0 = cx, y0 = cy;
+          const cp1x = lastCx2 !== null ? 2*cx - lastCx2 : cx;
+          const cp1y = lastCy2 !== null ? 2*cy - lastCy2 : cy;
+          lastCx2 = cx+a[i]; lastCy2 = cy+a[i+1];
+          cx += a[i+2]; cy += a[i+3];
+          segments.push({ type: 'C', x0, y0, cx1: cp1x, cy1: cp1y, cx2: lastCx2, cy2: lastCy2, x: cx, y: cy });
+        }
+        resetQ(); break;
+
+      // ── Quadratic Bezier
+      case 'Q':
+        for (i = 0; i < a.length; i += 4) {
+          const x0 = cx, y0 = cy;
+          lastQcx = a[i]; lastQcy = a[i+1];
+          cx = a[i+2]; cy = a[i+3];
+          segments.push({ type: 'Q', x0, y0, cx1: lastQcx, cy1: lastQcy, x: cx, y: cy });
+        }
+        resetS(); break;
+      case 'q':
+        for (i = 0; i < a.length; i += 4) {
+          const x0 = cx, y0 = cy;
+          lastQcx = cx+a[i]; lastQcy = cy+a[i+1];
+          cx += a[i+2]; cy += a[i+3];
+          segments.push({ type: 'Q', x0, y0, cx1: lastQcx, cy1: lastQcy, x: cx, y: cy });
+        }
+        resetS(); break;
+
+      // ── Smooth Quadratic (T/t)
+      case 'T':
+        for (i = 0; i < a.length; i += 2) {
+          const x0 = cx, y0 = cy;
+          lastQcx = lastQcx !== null ? 2*cx - lastQcx : cx;
+          lastQcy = lastQcy !== null ? 2*cy - lastQcy : cy;
+          cx = a[i]; cy = a[i+1];
+          segments.push({ type: 'Q', x0, y0, cx1: lastQcx, cy1: lastQcy, x: cx, y: cy });
+        }
+        resetS(); break;
+      case 't':
+        for (i = 0; i < a.length; i += 2) {
+          const x0 = cx, y0 = cy;
+          lastQcx = lastQcx !== null ? 2*cx - lastQcx : cx;
+          lastQcy = lastQcy !== null ? 2*cy - lastQcy : cy;
           cx += a[i]; cy += a[i+1];
+          segments.push({ type: 'Q', x0, y0, cx1: lastQcx, cy1: lastQcy, x: cx, y: cy });
+        }
+        resetS(); break;
+
+      // ── Arc (A/a) — approximé comme un point d'ancre à l'arrivée
+      case 'A':
+        for (i = 0; i < a.length; i += 7) {
+          cx = a[i+5]; cy = a[i+6];
           segments.push({ type: 'L', x: cx, y: cy });
         }
-        break;
-      case 'H': cx = a[0]; segments.push({ type: 'L', x: cx, y: cy }); break;
-      case 'h': cx += a[0]; segments.push({ type: 'L', x: cx, y: cy }); break;
-      case 'V': cy = a[0]; segments.push({ type: 'L', x: cx, y: cy }); break;
-      case 'v': cy += a[0]; segments.push({ type: 'L', x: cx, y: cy }); break;
-      case 'C':
-        for (let i = 0; i < a.length; i += 6) {
-          const x0 = cx, y0 = cy;
-          cx = a[i+4]; cy = a[i+5];
-          segments.push({ type: 'C', x0, y0, cx1: a[i], cy1: a[i+1], cx2: a[i+2], cy2: a[i+3], x: cx, y: cy });
+        resetS(); resetQ(); break;
+      case 'a':
+        for (i = 0; i < a.length; i += 7) {
+          cx += a[i+5]; cy += a[i+6];
+          segments.push({ type: 'L', x: cx, y: cy });
         }
-        break;
-      case 'c':
-        for (let i = 0; i < a.length; i += 6) {
-          const x0 = cx, y0 = cy;
-          segments.push({ type: 'C', x0, y0, cx1: cx+a[i], cy1: cy+a[i+1], cx2: cx+a[i+2], cy2: cy+a[i+3], x: cx+a[i+4], y: cy+a[i+5] });
-          cx += a[i+4]; cy += a[i+5];
-        }
-        break;
-      case 'Q':
-        for (let i = 0; i < a.length; i += 4) {
-          const x0 = cx, y0 = cy;
-          cx = a[i+2]; cy = a[i+3];
-          segments.push({ type: 'Q', x0, y0, cx1: a[i], cy1: a[i+1], x: cx, y: cy });
-        }
-        break;
-      case 'q':
-        for (let i = 0; i < a.length; i += 4) {
-          const x0 = cx, y0 = cy;
-          segments.push({ type: 'Q', x0, y0, cx1: cx+a[i], cy1: cy+a[i+1], x: cx+a[i+2], y: cy+a[i+3] });
-          cx += a[i+2]; cy += a[i+3];
-        }
-        break;
+        resetS(); resetQ(); break;
+
       case 'Z': case 'z':
-        cx = startX; cy = startY; break;
+        segments.push({ type: 'L', x: startX, y: startY });
+        cx = startX; cy = startY;
+        resetS(); resetQ(); break;
     }
   }
   return segments;
+}
+
+// Collecte tous les paths d'un SVG en tenant compte des transforms de groupe
+function collectPaths(svgDoc) {
+  const paths = [];
+  function walk(node, transform) {
+    const t = node.getAttribute && node.getAttribute('transform');
+    const combined = t ? `${transform} ${t}`.trim() : transform;
+    if (node.tagName === 'path') {
+      paths.push({ el: node, transform: combined });
+    } else if (['g','svg','symbol'].includes(node.tagName)) {
+      Array.from(node.children).forEach(child => walk(child, combined));
+    } else if (['polygon','polyline','circle','ellipse','rect'].includes(node.tagName)) {
+      paths.push({ el: node, transform: combined, notPath: true });
+    }
+  }
+  walk(svgDoc.documentElement || svgDoc, '');
+  return paths;
 }
 
 // ─────────────────────────────────────────────
