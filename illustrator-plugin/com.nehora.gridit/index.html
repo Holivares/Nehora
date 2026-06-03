@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Nehora</title>
+<script src="js/CSInterface.js"></script>
+<script src="js/bridge.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #1e1e1e;
+  --surface: #252525;
+  --surface2: #2e2e2e;
+  --border: #3a3a3a;
+  --accent: #a78bfa;
+  --accent2: #7c3aed;
+  --text: #e0e0e0;
+  --muted: #888;
+  --success: #34d399;
+  --danger: #f87171;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 11px;
+  overflow-x: hidden;
+  user-select: none;
+}
+
+/* ── Status bar ── */
+#statusbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.logo-text { font-weight: 700; font-size: 13px; color: var(--accent); letter-spacing: -0.3px; }
+.spacer { flex: 1; }
+#doc-status { font-size: 10px; color: var(--muted); }
+#doc-status.ok { color: var(--success); }
+#doc-status.err { color: var(--danger); }
+
+/* ── Tabs ── */
+#tabs {
+  display: flex;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.tab {
+  flex: 1;
+  padding: 7px 4px;
+  text-align: center;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+}
+.tab:hover { color: var(--text); }
+.tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* ── Panels ── */
+.panel { display: none; padding: 10px; }
+.panel.active { display: block; }
+
+.section-title {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+  margin-top: 12px;
+}
+.section-title:first-child { margin-top: 0; }
+
+/* Grid type cards */
+.grid-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 12px; }
+.grid-card {
+  border: 1.5px solid var(--border);
+  border-radius: 7px;
+  padding: 8px 4px;
+  cursor: pointer;
+  text-align: center;
+  background: var(--surface2);
+  transition: all 0.15s;
+}
+.grid-card:hover { border-color: var(--accent2); }
+.grid-card.active { border-color: var(--accent); background: rgba(124,58,237,0.12); }
+.grid-card svg { display: block; margin: 0 auto 4px; width: 28px; height: 28px; }
+.grid-card span { font-size: 9px; font-weight: 600; color: var(--muted); }
+.grid-card.active span { color: var(--accent); }
+
+/* Controls */
+.ctrl-row { display: flex; align-items: center; gap: 6px; margin-bottom: 7px; }
+.ctrl-row label { width: 80px; color: var(--muted); flex-shrink: 0; }
+.ctrl-row input[type=range] { flex: 1; accent-color: var(--accent); height: 3px; }
+.ctrl-row .val { width: 28px; text-align: right; color: var(--text); font-size: 10px; font-variant-numeric: tabular-nums; }
+
+/* Color row */
+.color-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.color-row label { flex: 1; color: var(--muted); }
+.swatch { width: 20px; height: 20px; border-radius: 4px; border: 1.5px solid var(--border); position: relative; cursor: pointer; }
+.swatch input[type=color] { opacity: 0; position: absolute; inset: 0; width: 100%; height: 100%; cursor: pointer; }
+
+/* Toggle */
+.toggle-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.toggle-row label { flex: 1; color: var(--muted); }
+.toggle { width: 28px; height: 16px; background: var(--border); border-radius: 8px; cursor: pointer; position: relative; transition: background 0.2s; flex-shrink: 0; }
+.toggle.on { background: var(--accent2); }
+.toggle::after { content: ''; position: absolute; top: 2px; left: 2px; width: 12px; height: 12px; border-radius: 50%; background: #fff; transition: left 0.2s; }
+.toggle.on::after { left: 14px; }
+
+/* Buttons */
+.btn {
+  width: 100%;
+  padding: 7px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 6px;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+.btn-primary { background: var(--accent2); color: #fff; }
+.btn-primary:hover { background: #6d28d9; }
+.btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+.btn-secondary:hover { border-color: var(--accent2); color: var(--accent); }
+.btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+.btn-danger:hover { background: rgba(248,113,113,0.1); }
+
+/* Preview SVG mini */
+#preview-wrap {
+  background: #111;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  margin-bottom: 10px;
+  overflow: hidden;
+  position: relative;
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+#preview-svg { width: 100%; height: 100%; }
+.preview-label {
+  position: absolute;
+  bottom: 6px;
+  right: 8px;
+  font-size: 9px;
+  color: var(--muted);
+}
+
+/* Selection info */
+#sel-info {
+  background: var(--surface2);
+  border-radius: 6px;
+  padding: 7px 9px;
+  margin-bottom: 10px;
+  font-size: 10px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+#sel-info b { color: var(--text); }
+#sel-info.has-sel { border-left: 2px solid var(--accent); }
+
+/* Toast */
+#toast {
+  position: fixed;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--success);
+  color: #000;
+  padding: 5px 14px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  opacity: 0;
+  transition: all 0.3s;
+  z-index: 999;
+  pointer-events: none;
+  white-space: nowrap;
+}
+#toast.err { background: var(--danger); color: #fff; }
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* Decompose results */
+#decomp-result { margin-top: 8px; }
+.decomp-item {
+  background: var(--surface2);
+  border-radius: 5px;
+  padding: 5px 8px;
+  margin-bottom: 4px;
+  font-size: 10px;
+  color: var(--muted);
+}
+.decomp-item b { color: var(--text); }
+</style>
+</head>
+<body>
+
+<!-- Status -->
+<div id="statusbar">
+  <span class="logo-text">◈ Nehora</span>
+  <span class="spacer"></span>
+  <span id="doc-status">Chargement…</span>
+</div>
+
+<!-- Tabs -->
+<div id="tabs">
+  <div class="tab active" data-tab="grid">Grille</div>
+  <div class="tab" data-tab="logo">Logo</div>
+  <div class="tab" data-tab="clear">Clearspace</div>
+</div>
+
+<!-- ═══ TAB : GRILLE ═══ -->
+<div class="panel active" id="panel-grid">
+
+  <div class="section-title">Aperçu</div>
+  <div id="preview-wrap">
+    <svg id="preview-svg" xmlns="http://www.w3.org/2000/svg" viewBox="-100 -100 200 200"></svg>
+    <span class="preview-label" id="preview-type">Carré</span>
+  </div>
+
+  <div class="section-title">Type de grille</div>
+  <div class="grid-cards">
+    <div class="grid-card active" data-type="square">
+      <svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.2">
+        <line x1="7" y1="0" x2="7" y2="28"/><line x1="14" y1="0" x2="14" y2="28"/><line x1="21" y1="0" x2="21" y2="28"/>
+        <line x1="0" y1="7" x2="28" y2="7"/><line x1="0" y1="14" x2="28" y2="14"/><line x1="0" y1="21" x2="28" y2="21"/>
+      </svg>
+      <span>Carré</span>
+    </div>
+    <div class="grid-card" data-type="iso">
+      <svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.2">
+        <line x1="0" y1="28" x2="14" y2="0"/><line x1="7" y1="28" x2="21" y2="0"/><line x1="14" y1="28" x2="28" y2="0"/>
+        <line x1="28" y1="28" x2="14" y2="0"/><line x1="21" y1="28" x2="7" y2="0"/><line x1="14" y1="28" x2="0" y2="0"/>
+        <line x1="0" y1="14" x2="28" y2="14"/>
+      </svg>
+      <span>Isométrique</span>
+    </div>
+    <div class="grid-card" data-type="hex">
+      <svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.2">
+        <polygon points="14,2 24,8 24,20 14,26 4,20 4,8"/>
+      </svg>
+      <span>Hexagone</span>
+    </div>
+    <div class="grid-card" data-type="golden">
+      <svg viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="1.2">
+        <rect x="1" y="1" width="26" height="16"/><rect x="1" y="1" width="16" height="16"/>
+        <rect x="1" y="1" width="10" height="10"/><rect x="11" y="1" width="6" height="6"/>
+      </svg>
+      <span>Golden Ratio</span>
+    </div>
+  </div>
+
+  <div class="section-title">Paramètres</div>
+  <div class="ctrl-row">
+    <label>Taille (pt)</label>
+    <input type="range" id="s-size" min="100" max="1000" value="400" step="10">
+    <span class="val" id="v-size">400</span>
+  </div>
+  <div class="ctrl-row">
+    <label>Subdivisions</label>
+    <input type="range" id="s-sub" min="2" max="24" value="8">
+    <span class="val" id="v-sub">8</span>
+  </div>
+  <div class="ctrl-row">
+    <label>Épaisseur</label>
+    <input type="range" id="s-sw" min="0.25" max="3" value="0.5" step="0.25">
+    <span class="val" id="v-sw">0.5</span>
+  </div>
+
+  <div class="section-title">Couleurs</div>
+  <div class="color-row">
+    <label>Principale</label>
+    <div class="swatch" style="background:#a78bfa"><input type="color" id="c-main" value="#a78bfa"></div>
+  </div>
+  <div class="color-row">
+    <label>Secondaire</label>
+    <div class="swatch" style="background:#4b4b6a"><input type="color" id="c-sec" value="#4b4b6a"></div>
+  </div>
+
+  <div class="section-title">Options</div>
+  <div class="toggle-row">
+    <label>Centré sur la sélection</label>
+    <div class="toggle on" id="tog-usesel"></div>
+  </div>
+
+  <button class="btn btn-primary" id="btn-apply-grid">▶ Appliquer dans Illustrator</button>
+  <button class="btn btn-secondary" id="btn-clear">✕ Supprimer les calques Nehora</button>
+
+</div>
+
+<!-- ═══ TAB : LOGO ═══ -->
+<div class="panel" id="panel-logo">
+
+  <div id="sel-info">Sélectionnez un élément dans Illustrator</div>
+
+  <button class="btn btn-secondary" id="btn-read-sel">⟳ Lire la sélection</button>
+
+  <div class="section-title">Composants à afficher</div>
+  <div class="toggle-row"><label>Ancres (nœuds)</label><div class="toggle on" data-comp="anchors"></div></div>
+  <div class="toggle-row"><label>Poignées Bézier</label><div class="toggle on" data-comp="handles"></div></div>
+  <div class="toggle-row"><label>Contours</label><div class="toggle on" data-comp="outlines"></div></div>
+  <div class="toggle-row"><label>Grille de construction</label><div class="toggle on" data-comp="gridlines"></div></div>
+  <div class="toggle-row"><label>Cercles de courbure</label><div class="toggle" data-comp="circles"></div></div>
+
+  <div class="section-title">Couleurs composants</div>
+  <div class="color-row"><label>Ancres</label><div class="swatch" style="background:#f87171"><input type="color" id="c-anchors" value="#f87171"></div></div>
+  <div class="color-row"><label>Poignées</label><div class="swatch" style="background:#60a5fa"><input type="color" id="c-handles" value="#60a5fa"></div></div>
+  <div class="color-row"><label>Contours</label><div class="swatch" style="background:#a78bfa"><input type="color" id="c-outlines" value="#a78bfa"></div></div>
+  <div class="color-row"><label>Grille</label><div class="swatch" style="background:#333344"><input type="color" id="c-gridlines" value="#333344"></div></div>
+
+  <div id="decomp-result"></div>
+
+  <button class="btn btn-primary" id="btn-apply-logo">▶ Appliquer dans Illustrator</button>
+
+</div>
+
+<!-- ═══ TAB : CLEARSPACE ═══ -->
+<div class="panel" id="panel-clear">
+
+  <div id="sel-info-clear">Sélectionnez un élément dans Illustrator</div>
+
+  <button class="btn btn-secondary" id="btn-read-clear">⟳ Lire la sélection</button>
+
+  <div class="section-title">Méthode</div>
+  <div class="toggle-row">
+    <label>Basé sur X-height</label>
+    <div class="toggle on" id="tog-xheight"></div>
+  </div>
+  <div class="ctrl-row">
+    <label>X-height (pt)</label>
+    <input type="range" id="s-xh" min="4" max="120" value="20">
+    <span class="val" id="v-xh">20</span>
+  </div>
+  <div class="ctrl-row">
+    <label>Multiplicateur</label>
+    <input type="range" id="s-mult" min="0.25" max="4" value="1" step="0.25">
+    <span class="val" id="v-mult">1.0</span>
+  </div>
+
+  <div class="section-title">Couleur zone</div>
+  <div class="color-row">
+    <label>Clearspace</label>
+    <div class="swatch" style="background:#f59e0b"><input type="color" id="c-clear" value="#f59e0b"></div>
+  </div>
+
+  <div id="clear-info" style="margin-bottom:8px; font-size:10px; color:var(--muted);"></div>
+
+  <button class="btn btn-primary" id="btn-apply-clear">▶ Créer les guides Illustrator</button>
+  <button class="btn btn-secondary" id="btn-clear-guides">✕ Supprimer les calques Nehora</button>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ─────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────
+var state = {
+  gridType: 'square',
+  size: 400,
+  subdivisions: 8,
+  strokeWidth: 0.5,
+  colorMain: '#a78bfa',
+  colorSec: '#4b4b6a',
+  useSelection: true,
+  selectionData: null,
+  xheight: 20,
+  mult: 1,
+  clearColor: '#f59e0b',
+  logoComps: { anchors: true, handles: true, outlines: true, gridlines: true, circles: false },
+};
+
+// ─────────────────────────────────────────────
+// TABS
+// ─────────────────────────────────────────────
+document.querySelectorAll('#tabs .tab').forEach(function(t) {
+  t.addEventListener('click', function() {
+    document.querySelectorAll('#tabs .tab').forEach(function(x) { x.classList.remove('active'); });
+    document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
+    t.classList.add('active');
+    document.getElementById('panel-' + t.dataset.tab).classList.add('active');
+  });
+});
+
+// ─────────────────────────────────────────────
+// GRID CARDS
+// ─────────────────────────────────────────────
+document.querySelectorAll('.grid-card').forEach(function(c) {
+  c.addEventListener('click', function() {
+    document.querySelectorAll('.grid-card').forEach(function(x) { x.classList.remove('active'); });
+    c.classList.add('active');
+    state.gridType = c.dataset.type;
+    var labels = { square: 'Carré', iso: 'Isométrique', hex: 'Hexagone', golden: 'Golden Ratio' };
+    document.getElementById('preview-type').textContent = labels[state.gridType];
+    renderPreview();
+  });
+});
+
+// ─────────────────────────────────────────────
+// SLIDERS
+// ─────────────────────────────────────────────
+function bindSlider(id, valId, key, decimals) {
+  var el = document.getElementById(id);
+  var vEl = document.getElementById(valId);
+  el.addEventListener('input', function() {
+    var v = parseFloat(el.value);
+    state[key] = v;
+    vEl.textContent = decimals ? v.toFixed(decimals) : Math.round(v);
+    renderPreview();
+  });
+}
+bindSlider('s-size', 'v-size', 'size', 0);
+bindSlider('s-sub', 'v-sub', 'subdivisions', 0);
+bindSlider('s-sw', 'v-sw', 'strokeWidth', 2);
+bindSlider('s-xh', 'v-xh', 'xheight', 0);
+bindSlider('s-mult', 'v-mult', 'mult', 2);
+
+// ─────────────────────────────────────────────
+// COLORS
+// ─────────────────────────────────────────────
+function bindColor(id, key, obj) {
+  var el = document.getElementById(id);
+  el.addEventListener('input', function() {
+    if (obj) obj[key] = el.value;
+    else state[key] = el.value;
+    el.parentElement.style.background = el.value;
+    renderPreview();
+  });
+}
+bindColor('c-main', 'colorMain');
+bindColor('c-sec', 'colorSec');
+bindColor('c-clear', 'clearColor');
+
+// ─────────────────────────────────────────────
+// TOGGLES
+// ─────────────────────────────────────────────
+document.getElementById('tog-usesel').addEventListener('click', function() {
+  this.classList.toggle('on');
+  state.useSelection = this.classList.contains('on');
+});
+document.getElementById('tog-xheight').addEventListener('click', function() {
+  this.classList.toggle('on');
+});
+document.querySelectorAll('.toggle[data-comp]').forEach(function(tog) {
+  tog.addEventListener('click', function() {
+    tog.classList.toggle('on');
+    state.logoComps[tog.dataset.comp] = tog.classList.contains('on');
+  });
+});
+
+// ─────────────────────────────────────────────
+// PREVIEW SVG (mini)
+// ─────────────────────────────────────────────
+function svgEl(tag, attrs) {
+  var e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  for (var k in attrs) e.setAttribute(k, attrs[k]);
+  return e;
+}
+
+function renderPreview() {
+  var svg = document.getElementById('preview-svg');
+  while (svg.lastChild) svg.removeChild(svg.lastChild);
+  svg.setAttribute('viewBox', '-100 -100 200 200');
+
+  // Background
+  svg.appendChild(svgEl('rect', { x: -100, y: -100, width: 200, height: 200, fill: '#111' }));
+  svg.appendChild(svgEl('rect', { x: -90, y: -90, width: 180, height: 180, fill: '#1a1a1a', rx: 3 }));
+
+  var half = 90, sub = state.subdivisions;
+  var mc = state.colorMain, sc = state.colorSec;
+  var sw = Math.max(0.3, state.strokeWidth * 0.4);
+
+  if (state.gridType === 'square') {
+    var step = 180 / sub;
+    for (var i = 0; i <= sub; i++) {
+      var pos = -half + i * step;
+      var isM = (i === 0 || i === sub || i === sub/2);
+      var c = isM ? mc : sc, op = isM ? 0.9 : 0.4, w = isM ? sw*1.5 : sw;
+      svg.appendChild(svgEl('line', { x1: pos, y1: -half, x2: pos, y2: half, stroke: c, 'stroke-width': w, opacity: op }));
+      svg.appendChild(svgEl('line', { x1: -half, y1: pos, x2: half, y2: pos, stroke: c, 'stroke-width': w, opacity: op }));
+    }
+    svg.appendChild(svgEl('circle', { cx: 0, cy: 0, r: half, fill: 'none', stroke: mc, 'stroke-width': sw, opacity: 0.4, 'stroke-dasharray': '3 3' }));
+    svg.appendChild(svgEl('line', { x1: -half, y1: -half, x2: half, y2: half, stroke: '#f87171', 'stroke-width': sw, opacity: 0.4 }));
+    svg.appendChild(svgEl('line', { x1: half, y1: -half, x2: -half, y2: half, stroke: '#f87171', 'stroke-width': sw, opacity: 0.4 }));
+
+  } else if (state.gridType === 'iso') {
+    var step2 = 180 / sub, ext = 300, cos60 = 0.5, sin60 = 0.866;
+    for (var i2 = 0; i2 <= sub; i2++) {
+      var y2 = -half + i2 * step2, isM2 = (i2 === 0 || i2 === sub || i2 === sub/2);
+      svg.appendChild(svgEl('line', { x1: -half, y1: y2, x2: half, y2: y2, stroke: isM2 ? mc : sc, 'stroke-width': isM2 ? sw*1.5 : sw, opacity: isM2 ? 0.9 : 0.4 }));
+    }
+    for (var j2 = -sub*2; j2 <= sub*2; j2++) {
+      var x2 = j2 * step2, isM3 = (j2 % Math.round(sub/2) === 0);
+      svg.appendChild(svgEl('line', { x1: x2 - ext*cos60, y1: -ext*sin60, x2: x2 + ext*cos60, y2: ext*sin60, stroke: isM3 ? mc : sc, 'stroke-width': isM3 ? sw*1.5 : sw, opacity: isM3 ? 0.7 : 0.3 }));
+      svg.appendChild(svgEl('line', { x1: x2 + ext*cos60, y1: -ext*sin60, x2: x2 - ext*cos60, y2: ext*sin60, stroke: isM3 ? mc : sc, 'stroke-width': isM3 ? sw*1.5 : sw, opacity: isM3 ? 0.7 : 0.3 }));
+    }
+
+  } else if (state.gridType === 'hex') {
+    var subH = Math.max(2, Math.floor(sub/2));
+    var R = half / (subH + 0.5), hexW = R * 2, hexH2 = Math.sqrt(3) * R;
+    for (var row = -subH*2; row <= subH*2; row++) {
+      for (var col = -subH*2; col <= subH*2; col++) {
+        var hx = col * hexW * 0.75, hy = row * hexH2 + (col%2===0 ? 0 : hexH2/2);
+        if (Math.abs(hx) > half + R || Math.abs(hy) > half + R) continue;
+        var pts = [];
+        for (var k = 0; k < 6; k++) { var a = Math.PI/180*(60*k-30); pts.push((hx+R*Math.cos(a))+','+(hy+R*Math.sin(a))); }
+        svg.appendChild(svgEl('polygon', { points: pts.join(' '), fill: 'none', stroke: sc, 'stroke-width': sw, opacity: 0.6 }));
+      }
+    }
+
+  } else if (state.gridType === 'golden') {
+    var phi = 1.618;
+    function goldenR(x, y, w, h, depth) {
+      if (depth <= 0 || w < 2 || h < 2) return;
+      svg.appendChild(svgEl('rect', { x: x, y: y, width: w, height: h, fill: 'none', stroke: mc, 'stroke-width': sw * Math.max(0.3, 1-depth*0.12), opacity: 0.7 }));
+      if (w > h) { goldenR(x, y, h, h, depth-1); goldenR(x+h, y, w-h, h, depth-1); }
+      else { goldenR(x, y, w, w, depth-1); goldenR(x, y+w, w, h-w, depth-1); }
+    }
+    goldenR(-half, -half, 180, 180/phi, 8);
+  }
+}
+
+// ─────────────────────────────────────────────
+// DOC STATUS
+// ─────────────────────────────────────────────
+function updateDocStatus() {
+  var statusEl = document.getElementById('doc-status');
+  if (typeof nehoraAPI === 'undefined') {
+    statusEl.textContent = 'Mode web (hors Illustrator)';
+    statusEl.className = '';
+    return;
+  }
+  nehoraAPI.getDocInfo(function(info) {
+    if (info.error) {
+      statusEl.textContent = info.error;
+      statusEl.className = 'err';
+    } else {
+      statusEl.textContent = info.name + ' · ' + Math.round(info.width) + '×' + Math.round(info.height) + 'pt';
+      statusEl.className = 'ok';
+    }
+  });
+}
+
+// ─────────────────────────────────────────────
+// APPLIQUER LA GRILLE
+// ─────────────────────────────────────────────
+document.getElementById('btn-apply-grid').addEventListener('click', function() {
+  if (typeof nehoraAPI === 'undefined') { showToast('Ouvrir dans Illustrator', true); return; }
+  var params = {
+    type: state.gridType,
+    size: state.size,
+    subdivisions: state.subdivisions,
+    strokeWidth: state.strokeWidth,
+    color: state.colorMain,
+    secColor: state.colorSec,
+    useSelection: state.useSelection
+  };
+  nehoraAPI.createGrid(params, function(msg) { showToast(msg); updateDocStatus(); });
+});
+
+// ─────────────────────────────────────────────
+// LIRE SÉLECTION (LOGO TAB)
+// ─────────────────────────────────────────────
+document.getElementById('btn-read-sel').addEventListener('click', function() {
+  if (typeof nehoraAPI === 'undefined') { showToast('Ouvrir dans Illustrator', true); return; }
+  nehoraAPI.getSelection(function(data) {
+    if (data.error) { showToast(data.error, true); return; }
+    state.selectionData = data;
+    var info = document.getElementById('sel-info');
+    var sb = data.selectionBounds;
+    info.className = 'has-sel';
+    info.innerHTML = '<b>' + data.items.length + ' élément(s)</b><br>'
+      + 'Taille : <b>' + Math.round(sb.width) + ' × ' + Math.round(sb.height) + ' pt</b><br>'
+      + 'Nœuds : <b>' + countAnchors(data) + '</b>';
+
+    // Résumé par élément
+    var res = document.getElementById('decomp-result');
+    res.innerHTML = '';
+    data.items.forEach(function(item) {
+      var div = document.createElement('div');
+      div.className = 'decomp-item';
+      div.innerHTML = '<b>' + item.type + '</b> — ' + item.paths.length + ' chemin(s), '
+        + (item.paths[0] ? item.paths[0].anchors.length : 0) + ' ancres';
+      res.appendChild(div);
+    });
+  });
+});
+
+function countAnchors(data) {
+  var n = 0;
+  data.items.forEach(function(item) {
+    item.paths.forEach(function(p) { n += p.anchors.length; });
+  });
+  return n;
+}
+
+// ─────────────────────────────────────────────
+// APPLIQUER GRILLE LOGO (calque dans AI)
+// ─────────────────────────────────────────────
+document.getElementById('btn-apply-logo').addEventListener('click', function() {
+  if (typeof nehoraAPI === 'undefined') { showToast('Ouvrir dans Illustrator', true); return; }
+  if (!state.selectionData) { showToast('Lisez d\'abord la sélection', true); return; }
+  // Crée une grille carrée centrée sur la sélection
+  var sb = state.selectionData.selectionBounds;
+  var params = {
+    type: 'square',
+    size: Math.max(sb.width, sb.height) * 1.3,
+    subdivisions: 8,
+    strokeWidth: 0.3,
+    color: document.getElementById('c-outlines').value,
+    secColor: document.getElementById('c-gridlines').value,
+    useSelection: true
+  };
+  nehoraAPI.createGrid(params, function(msg) { showToast(msg); });
+});
+
+// ─────────────────────────────────────────────
+// CLEARSPACE
+// ─────────────────────────────────────────────
+document.getElementById('btn-read-clear').addEventListener('click', function() {
+  if (typeof nehoraAPI === 'undefined') { showToast('Ouvrir dans Illustrator', true); return; }
+  nehoraAPI.getSelection(function(data) {
+    if (data.error) { showToast(data.error, true); return; }
+    var sb = data.selectionBounds;
+    var margin = document.getElementById('tog-xheight').classList.contains('on')
+      ? state.xheight * state.mult
+      : sb.height * 0.15 * state.mult;
+    var info = document.getElementById('sel-info-clear');
+    info.className = 'has-sel';
+    info.innerHTML = '<b>' + Math.round(sb.width) + ' × ' + Math.round(sb.height) + ' pt</b><br>';
+    document.getElementById('clear-info').textContent = 'Marge calculée : ' + Math.round(margin) + ' pt';
+    state._clearData = data;
+    state._clearMargin = margin;
+  });
+});
+
+document.getElementById('btn-apply-clear').addEventListener('click', function() {
+  if (typeof nehoraAPI === 'undefined') { showToast('Ouvrir dans Illustrator', true); return; }
+  var margin = document.getElementById('tog-xheight').classList.contains('on')
+    ? state.xheight * state.mult
+    : 30;
+  nehoraAPI.createClearspaceGuides({ margin: margin, color: state.clearColor }, function(msg) { showToast(msg); });
+});
+
+// ─────────────────────────────────────────────
+// SUPPRIMER CALQUES
+// ─────────────────────────────────────────────
+['btn-clear', 'btn-clear-guides'].forEach(function(id) {
+  document.getElementById(id).addEventListener('click', function() {
+    if (typeof nehoraAPI === 'undefined') { showToast('Ouvrir dans Illustrator', true); return; }
+    nehoraAPI.clearLayers(function(msg) { showToast(msg); });
+  });
+});
+
+// ─────────────────────────────────────────────
+// TOAST
+// ─────────────────────────────────────────────
+function showToast(msg, isErr) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = (isErr ? 'err ' : '') + 'show';
+  setTimeout(function() { t.className = isErr ? 'err' : ''; }, 3000);
+}
+
+// ─────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────
+renderPreview();
+if (typeof loadJSX !== 'undefined') {
+  loadJSX();
+  setTimeout(updateDocStatus, 500);
+}
+</script>
+</body>
+</html>
