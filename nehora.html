@@ -4,357 +4,485 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Nehora — Logo Grid Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg: #0e0e10;
-    --surface: #18181b;
-    --surface2: #222228;
-    --border: #2e2e36;
-    --accent: #a78bfa;
-    --accent2: #7c3aed;
-    --text: #e4e4f0;
-    --muted: #6b6b80;
-    --success: #34d399;
-    --danger: #f87171;
-    --canvas-bg: #141417;
+    --bg:        #06060c;
+    --surface:   #0d0d16;
+    --surface2:  #13131f;
+    --surface3:  #1a1a28;
+    --border:    rgba(255,255,255,0.06);
+    --border-hi: rgba(255,255,255,0.11);
+    --gold:      #c9a84c;
+    --gold-lt:   #e8c97a;
+    --gold-dk:   #a07830;
+    --violet:    #9d7ef0;
+    --violet-dk: #6d45d0;
+    --text:      #eeeef8;
+    --text-2:    #a0a0be;
+    --muted:     #4a4a68;
+    --success:   #22d3a5;
+    --danger:    #f06060;
+    --canvas-bg: #080810;
   }
 
   body {
     background: var(--bg);
     color: var(--text);
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    font-size: 13px;
+    font-size: 12px;
     height: 100vh;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     user-select: none;
+    -webkit-font-smoothing: antialiased;
   }
 
   /* ─── TOPBAR ─── */
   #topbar {
-    height: 48px;
-    background: var(--surface);
+    height: 52px;
+    background: rgba(13,13,22,0.95);
+    backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
-    padding: 0 16px;
-    gap: 12px;
+    padding: 0 20px;
+    gap: 16px;
     flex-shrink: 0;
     z-index: 10;
+    position: relative;
+  }
+  #topbar::after {
+    content: '';
+    position: absolute;
+    bottom: -1px; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(201,168,76,0.3), transparent);
+    pointer-events: none;
   }
 
-  .logo-mark {
-    font-weight: 700;
-    font-size: 16px;
-    letter-spacing: -0.5px;
-    color: var(--accent);
-    margin-right: 8px;
+  .logo-wrap { display: flex; align-items: center; gap: 9px; margin-right: 6px; }
+  .logo-icon {
+    width: 28px; height: 28px;
+    background: linear-gradient(135deg, var(--gold-dk), var(--gold));
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    box-shadow: 0 0 16px rgba(201,168,76,0.25);
   }
+  .logo-name {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.4px;
+    color: var(--text);
+  }
+  .logo-name span { color: var(--gold); }
 
-  .divider { width: 1px; height: 24px; background: var(--border); }
+  .sep { width: 1px; height: 20px; background: var(--border-hi); }
 
-  .tab-group { display: flex; gap: 2px; }
+  .tab-group { display: flex; gap: 1px; background: var(--surface2); border-radius: 9px; padding: 3px; }
   .tab {
     padding: 5px 14px;
-    border-radius: 6px;
+    border-radius: 7px;
     cursor: pointer;
     color: var(--muted);
     font-weight: 500;
-    transition: all 0.15s;
-    font-size: 12px;
+    font-size: 11.5px;
+    letter-spacing: 0.1px;
+    transition: all 0.2s ease;
+    white-space: nowrap;
   }
-  .tab:hover { color: var(--text); background: var(--surface2); }
-  .tab.active { background: var(--accent2); color: #fff; }
+  .tab:hover { color: var(--text-2); }
+  .tab.active {
+    background: var(--surface3);
+    color: var(--text);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4), inset 0 0 0 1px var(--border-hi);
+  }
 
   .spacer { flex: 1; }
 
   .btn {
     display: flex; align-items: center; gap: 6px;
-    padding: 6px 14px;
-    border-radius: 7px;
+    padding: 7px 15px;
+    border-radius: 8px;
     cursor: pointer;
-    font-size: 12px;
+    font-size: 11.5px;
     font-weight: 500;
     border: none;
-    transition: all 0.15s;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    letter-spacing: 0.1px;
   }
-  .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
-  .btn-ghost:hover { color: var(--text); border-color: var(--muted); }
-  .btn-primary { background: var(--accent2); color: #fff; }
-  .btn-primary:hover { background: #6d28d9; }
-  .btn-outline { background: transparent; color: var(--accent); border: 1px solid var(--accent2); }
-  .btn-outline:hover { background: rgba(124,58,237,0.15); }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text-2);
+    border: 1px solid var(--border-hi);
+  }
+  .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.2); background: var(--surface2); }
+  .btn-outline {
+    background: transparent;
+    color: var(--gold);
+    border: 1px solid rgba(201,168,76,0.35);
+  }
+  .btn-outline:hover { background: rgba(201,168,76,0.07); border-color: var(--gold); }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--gold-dk) 0%, var(--gold) 60%, var(--gold-lt) 100%);
+    color: #1a1000;
+    font-weight: 600;
+    box-shadow: 0 2px 12px rgba(201,168,76,0.3), inset 0 1px 0 rgba(255,255,255,0.15);
+  }
+  .btn-primary:hover {
+    box-shadow: 0 4px 20px rgba(201,168,76,0.45), inset 0 1px 0 rgba(255,255,255,0.15);
+    transform: translateY(-1px);
+  }
+  .btn-primary:active { transform: translateY(0); }
 
   /* ─── LAYOUT ─── */
   #app { display: flex; flex: 1; overflow: hidden; }
 
   /* ─── SIDEBAR ─── */
   #sidebar {
-    width: 260px;
+    width: 268px;
     background: var(--surface);
     border-right: 1px solid var(--border);
     display: flex;
     flex-direction: column;
     overflow-y: auto;
     flex-shrink: 0;
+    scrollbar-width: thin;
+    scrollbar-color: var(--surface3) transparent;
   }
+  #sidebar::-webkit-scrollbar { width: 3px; }
+  #sidebar::-webkit-scrollbar-track { background: transparent; }
+  #sidebar::-webkit-scrollbar-thumb { background: var(--surface3); border-radius: 2px; }
 
-  .panel { padding: 16px; border-bottom: 1px solid var(--border); }
+  .panel { padding: 18px 16px; border-bottom: 1px solid var(--border); }
+
   .panel-title {
-    font-size: 10px;
+    font-size: 9.5px;
     font-weight: 600;
-    letter-spacing: 0.8px;
+    letter-spacing: 1px;
     text-transform: uppercase;
     color: var(--muted);
-    margin-bottom: 12px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .panel-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
   }
 
-  /* Grid type cards */
-  .grid-types { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  /* ─── GRID CARDS ─── */
+  .grid-types { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
   .grid-card {
     aspect-ratio: 1;
-    border-radius: 10px;
-    border: 2px solid var(--border);
+    border-radius: 12px;
+    border: 1px solid var(--border);
     cursor: pointer;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    transition: all 0.15s;
+    gap: 7px;
+    transition: all 0.2s ease;
     background: var(--surface2);
-    padding: 8px;
+    padding: 10px;
+    position: relative;
+    overflow: hidden;
   }
-  .grid-card:hover { border-color: var(--accent2); }
-  .grid-card.active { border-color: var(--accent); background: rgba(124,58,237,0.15); }
-  .grid-card svg { width: 36px; height: 36px; opacity: 0.8; }
-  .grid-card.active svg { opacity: 1; }
-  .grid-card span { font-size: 10px; font-weight: 600; color: var(--muted); }
-  .grid-card.active span { color: var(--accent); }
+  .grid-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 12px;
+    opacity: 0;
+    transition: opacity 0.2s;
+    background: radial-gradient(circle at 50% 0%, rgba(201,168,76,0.12), transparent 70%);
+  }
+  .grid-card:hover { border-color: var(--border-hi); }
+  .grid-card:hover::before { opacity: 1; }
+  .grid-card.active {
+    border-color: rgba(201,168,76,0.5);
+    background: rgba(201,168,76,0.06);
+    box-shadow: 0 0 0 1px rgba(201,168,76,0.15), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+  .grid-card.active::before { opacity: 1; }
+  .grid-card svg { width: 34px; height: 34px; opacity: 0.5; transition: opacity 0.2s; color: var(--text-2); }
+  .grid-card.active svg { opacity: 1; color: var(--gold); }
+  .grid-card span { font-size: 9.5px; font-weight: 600; color: var(--muted); letter-spacing: 0.3px; transition: color 0.2s; }
+  .grid-card.active span { color: var(--gold); }
 
-  /* Controls */
-  .control-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-  .control-row label { flex: 1; color: var(--muted); font-size: 12px; }
-  .control-row input[type=range] {
-    flex: 2;
-    accent-color: var(--accent);
-    height: 4px;
+  /* ─── CONTROLS ─── */
+  .control-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .control-row label { width: 76px; color: var(--text-2); font-size: 11px; flex-shrink: 0; }
+
+  input[type=range] {
+    flex: 1;
+    height: 3px;
+    border-radius: 2px;
+    background: var(--surface3);
+    outline: none;
+    border: none;
+    -webkit-appearance: none;
+    cursor: pointer;
   }
-  .control-row .val {
-    width: 32px;
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 13px; height: 13px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold-dk), var(--gold));
+    box-shadow: 0 0 6px rgba(201,168,76,0.5);
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  input[type=range]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 10px rgba(201,168,76,0.7);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 13px; height: 13px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold-dk), var(--gold));
+    border: none;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-runnable-track { height: 3px; border-radius: 2px; }
+
+  .val {
+    width: 30px;
     text-align: right;
     font-size: 11px;
-    color: var(--text);
+    color: var(--gold);
     font-variant-numeric: tabular-nums;
+    font-weight: 500;
   }
 
-  input[type=number], input[type=text] {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    color: var(--text);
-    padding: 5px 8px;
-    font-size: 12px;
-    width: 100%;
-    outline: none;
-  }
-  input[type=number]:focus, input[type=text]:focus { border-color: var(--accent); }
-
-  .toggle-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-  .toggle-row label { flex: 1; color: var(--muted); font-size: 12px; }
+  /* ─── TOGGLES ─── */
+  .toggle-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+  .toggle-row label { flex: 1; color: var(--text-2); font-size: 11px; }
   .toggle {
-    width: 32px; height: 18px;
-    background: var(--border);
-    border-radius: 9px;
+    width: 34px; height: 19px;
+    background: var(--surface3);
+    border: 1px solid var(--border-hi);
+    border-radius: 10px;
     cursor: pointer;
     position: relative;
-    transition: background 0.2s;
+    transition: all 0.25s ease;
     flex-shrink: 0;
   }
-  .toggle.on { background: var(--accent2); }
+  .toggle.on {
+    background: linear-gradient(135deg, var(--gold-dk), var(--gold));
+    border-color: transparent;
+    box-shadow: 0 0 8px rgba(201,168,76,0.3);
+  }
   .toggle::after {
     content: '';
     position: absolute;
-    top: 2px; left: 2px;
-    width: 14px; height: 14px;
+    top: 3px; left: 3px;
+    width: 13px; height: 13px;
     border-radius: 50%;
     background: #fff;
-    transition: left 0.2s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    transition: left 0.25s ease;
   }
-  .toggle.on::after { left: 16px; }
+  .toggle.on::after { left: 18px; }
 
-  /* Upload zone */
+  /* ─── UPLOAD ZONE ─── */
   .upload-zone {
-    border: 2px dashed var(--border);
-    border-radius: 10px;
-    padding: 20px;
+    border: 1px dashed var(--border-hi);
+    border-radius: 12px;
+    padding: 22px 16px;
     text-align: center;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.25s ease;
     color: var(--muted);
-    font-size: 12px;
-    line-height: 1.6;
+    font-size: 11.5px;
+    line-height: 1.7;
+    background: var(--surface2);
+    position: relative;
+    overflow: hidden;
   }
-  .upload-zone:hover, .upload-zone.drag { border-color: var(--accent2); color: var(--text); background: rgba(124,58,237,0.05); }
-  .upload-zone svg { margin: 0 auto 8px; display: block; opacity: 0.5; }
+  .upload-zone::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 0%, rgba(201,168,76,0.06), transparent 60%);
+    opacity: 0;
+    transition: opacity 0.25s;
+  }
+  .upload-zone:hover, .upload-zone.drag {
+    border-color: rgba(201,168,76,0.4);
+    color: var(--text-2);
+  }
+  .upload-zone:hover::before, .upload-zone.drag::before { opacity: 1; }
+  .upload-zone svg { margin: 0 auto 10px; display: block; opacity: 0.4; transition: opacity 0.2s; }
+  .upload-zone:hover svg { opacity: 0.7; }
 
-  /* Color swatch */
-  .color-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-  .color-row label { flex: 1; color: var(--muted); font-size: 12px; }
+  /* ─── SWATCHES ─── */
+  .color-row { display: flex; align-items: center; gap: 10px; margin-bottom: 9px; }
+  .color-row label { flex: 1; color: var(--text-2); font-size: 11px; }
   .swatch {
-    width: 24px; height: 24px;
-    border-radius: 5px;
-    border: 2px solid var(--border);
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.15);
     cursor: pointer;
     position: relative;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+    transition: transform 0.15s, box-shadow 0.15s;
   }
-  .swatch input[type=color] {
-    opacity: 0; position: absolute; inset: 0; width: 100%; height: 100%; cursor: pointer;
-  }
+  .swatch:hover { transform: scale(1.15); box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+  .swatch input[type=color] { opacity: 0; position: absolute; inset: 0; width: 100%; height: 100%; cursor: pointer; }
 
-  /* Layers */
+  /* ─── LAYERS ─── */
   .layer-item {
-    display: flex; align-items: center; gap: 8px;
-    padding: 6px 8px;
-    border-radius: 6px;
-    margin-bottom: 4px;
+    display: flex; align-items: center; gap: 9px;
+    padding: 7px 9px;
+    border-radius: 8px;
+    margin-bottom: 3px;
     cursor: pointer;
-    transition: background 0.1s;
+    transition: background 0.15s;
+    border: 1px solid transparent;
   }
-  .layer-item:hover { background: var(--surface2); }
-  .layer-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .layer-label { flex: 1; font-size: 12px; }
-  .layer-eye { color: var(--muted); font-size: 14px; cursor: pointer; line-height: 1; }
-  .layer-eye.hidden { opacity: 0.3; }
+  .layer-item:hover { background: var(--surface2); border-color: var(--border); }
+  .layer-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; box-shadow: 0 0 4px currentColor; }
+  .layer-label { flex: 1; font-size: 11px; color: var(--text-2); }
+  .layer-eye { color: var(--muted); font-size: 13px; cursor: pointer; line-height: 1; transition: color 0.15s; }
+  .layer-eye:hover { color: var(--gold); }
+  .layer-eye.hidden { opacity: 0.2; }
 
-  /* Export panel */
-  .export-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-
-  /* ─── CANVAS AREA ─── */
+  /* ─── CANVAS ─── */
   #canvas-wrap {
     flex: 1;
     background: var(--canvas-bg);
     position: relative;
     overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
   }
-
   #canvas-wrap canvas { display: none; }
-
-  #main-svg {
-    width: 100%;
-    height: 100%;
-    cursor: grab;
-  }
+  #main-svg { width: 100%; height: 100%; cursor: grab; }
   #main-svg:active { cursor: grabbing; }
 
   /* Rulers */
   #ruler-h, #ruler-v {
     position: absolute;
-    background: var(--surface);
+    background: rgba(13,13,22,0.9);
     color: var(--muted);
-    font-size: 9px;
+    font-size: 8.5px;
     z-index: 5;
     pointer-events: none;
+    font-family: 'Inter', monospace;
   }
-  #ruler-h { top: 0; left: 24px; right: 0; height: 24px; border-bottom: 1px solid var(--border); }
-  #ruler-v { top: 24px; left: 0; bottom: 0; width: 24px; border-right: 1px solid var(--border); }
-  #ruler-corner { position: absolute; top: 0; left: 0; width: 24px; height: 24px; background: var(--surface); border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); z-index: 6; }
+  #ruler-h { top: 0; left: 20px; right: 0; height: 20px; border-bottom: 1px solid var(--border); }
+  #ruler-v { top: 20px; left: 0; bottom: 0; width: 20px; border-right: 1px solid var(--border); }
+  #ruler-corner {
+    position: absolute; top: 0; left: 0; width: 20px; height: 20px;
+    background: rgba(13,13,22,0.9);
+    border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); z-index: 6;
+  }
 
-  /* Info bar */
+  /* Infobar */
   #infobar {
     position: absolute;
-    bottom: 12px;
+    bottom: 16px;
     left: 50%;
     transform: translateX(-50%);
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 4px 14px;
-    font-size: 11px;
+    background: rgba(13,13,22,0.85);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--border-hi);
+    border-radius: 10px;
+    padding: 5px 16px;
+    font-size: 10.5px;
     color: var(--muted);
     z-index: 5;
     display: flex;
-    gap: 16px;
+    gap: 18px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
   }
-  #infobar span b { color: var(--text); }
+  #infobar span { display: flex; align-items: center; gap: 5px; }
+  #infobar span b { color: var(--text); font-weight: 500; }
+  #infobar .dot { width: 3px; height: 3px; border-radius: 50%; background: var(--border-hi); }
 
   /* Zoom controls */
   #zoom-ctrl {
     position: absolute;
-    bottom: 12px;
-    right: 16px;
+    bottom: 16px; right: 20px;
     display: flex;
-    gap: 4px;
+    gap: 3px;
     z-index: 5;
+    background: rgba(13,13,22,0.85);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--border-hi);
+    border-radius: 10px;
+    padding: 4px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
   }
   .zoom-btn {
-    width: 28px; height: 28px;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text);
+    width: 26px; height: 26px;
+    background: transparent;
+    border: none;
+    color: var(--text-2);
     border-radius: 6px;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    font-size: 16px;
+    font-size: 15px;
+    font-family: inherit;
     transition: all 0.15s;
   }
-  .zoom-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .zoom-btn:hover { background: var(--surface2); color: var(--gold); }
   #zoom-level {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    color: var(--text);
-    border-radius: 6px;
-    padding: 0 8px;
-    font-size: 11px;
+    color: var(--text-2);
+    font-size: 10.5px;
     display: flex; align-items: center;
-    min-width: 52px; justify-content: center;
+    min-width: 42px; justify-content: center;
+    font-variant-numeric: tabular-nums;
   }
 
-  /* Panels visibility */
-  .panel-section { display: none; }
-  .panel-section.visible { display: block; }
-
-  /* Scrollbar styling */
-  #sidebar::-webkit-scrollbar { width: 4px; }
-  #sidebar::-webkit-scrollbar-track { background: transparent; }
-  #sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+  /* Tab contents */
+  .tab-content { display: none; }
+  .tab-content.active { display: flex; flex-direction: column; }
 
   /* Toast */
   #toast {
     position: fixed;
-    bottom: 60px;
+    bottom: 64px;
     left: 50%;
-    transform: translateX(-50%) translateY(20px);
-    background: var(--success);
-    color: #000;
-    padding: 8px 18px;
-    border-radius: 8px;
-    font-size: 12px;
+    transform: translateX(-50%) translateY(16px);
+    background: linear-gradient(135deg, #0d1a12, #0f2018);
+    border: 1px solid rgba(34,211,165,0.3);
+    color: var(--success);
+    padding: 9px 20px;
+    border-radius: 10px;
+    font-size: 11.5px;
     font-weight: 600;
     opacity: 0;
-    transition: all 0.3s;
+    transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
     z-index: 999;
     pointer-events: none;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4), 0 0 20px rgba(34,211,165,0.1);
+    letter-spacing: 0.2px;
   }
   #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-  /* Tab panels */
-  .tab-content { display: none; }
-  .tab-content.active { display: flex; flex-direction: column; }
+  /* Canvas dot BG pattern */
+  .canvas-dots { pointer-events: none; }
 </style>
 </head>
 <body>
 
-<!-- TOPBAR -->
+<!-- ══ TOPBAR ══ -->
 <div id="topbar">
-  <span class="logo-mark">◈ Nehora</span>
-  <div class="divider"></div>
+  <div class="logo-wrap">
+    <div class="logo-icon">◈</div>
+    <span class="logo-name">Ne<span>hora</span></span>
+  </div>
+  <div class="sep"></div>
   <div class="tab-group">
     <div class="tab active" data-tab="base">Grille de base</div>
     <div class="tab" data-tab="logo">Grille logo</div>
@@ -366,49 +494,43 @@
   <button class="btn btn-primary" id="btn-pdf">↓ PDF</button>
 </div>
 
-<!-- APP -->
+<!-- ══ APP ══ -->
 <div id="app">
 
-  <!-- SIDEBAR -->
+  <!-- ═ SIDEBAR ═ -->
   <div id="sidebar">
 
-    <!-- TAB: BASE GRID -->
+    <!-- TAB BASE -->
     <div class="tab-content active" id="tab-base">
 
       <div class="panel">
         <div class="panel-title">Type de grille</div>
         <div class="grid-types">
           <div class="grid-card active" data-type="square">
-            <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5">
-              <line x1="10" y1="0" x2="10" y2="40"/><line x1="20" y1="0" x2="20" y2="40"/>
-              <line x1="30" y1="0" x2="30" y2="40"/>
-              <line x1="0" y1="10" x2="40" y2="10"/><line x1="0" y1="20" x2="40" y2="20"/>
-              <line x1="0" y1="30" x2="40" y2="30"/>
+            <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.4">
+              <line x1="10" y1="0" x2="10" y2="40"/><line x1="20" y1="0" x2="20" y2="40"/><line x1="30" y1="0" x2="30" y2="40"/>
+              <line x1="0" y1="10" x2="40" y2="10"/><line x1="0" y1="20" x2="40" y2="20"/><line x1="0" y1="30" x2="40" y2="30"/>
             </svg>
             <span>Carré</span>
           </div>
           <div class="grid-card" data-type="iso">
-            <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5">
-              <line x1="0" y1="40" x2="20" y2="0"/><line x1="10" y1="40" x2="30" y2="0"/>
-              <line x1="20" y1="40" x2="40" y2="0"/><line x1="30" y1="40" x2="50" y2="0"/>
-              <line x1="40" y1="40" x2="20" y2="0"/><line x1="30" y1="40" x2="10" y2="0"/>
-              <line x1="20" y1="40" x2="0" y2="0"/><line x1="10" y1="40" x2="-10" y2="0"/>
+            <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.4">
+              <line x1="0" y1="40" x2="20" y2="0"/><line x1="10" y1="40" x2="30" y2="0"/><line x1="20" y1="40" x2="40" y2="0"/>
+              <line x1="40" y1="40" x2="20" y2="0"/><line x1="30" y1="40" x2="10" y2="0"/><line x1="20" y1="40" x2="0" y2="0"/>
               <line x1="0" y1="20" x2="40" y2="20"/>
             </svg>
             <span>Isométrique</span>
           </div>
           <div class="grid-card" data-type="hex">
-            <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5">
-              <polygon points="20,2 34,11 34,29 20,38 6,29 6,11"/>
+            <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.4">
+              <polygon points="20,3 34,11 34,29 20,37 6,29 6,11"/>
             </svg>
             <span>Hexagone</span>
           </div>
           <div class="grid-card" data-type="golden">
-            <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.5">
-              <rect x="1" y="1" width="38" height="23.5"/>
-              <rect x="1" y="1" width="23.5" height="23.5"/>
-              <rect x="1" y="1" width="14.5" height="14.5"/>
-              <rect x="15.5" y="1" width="9" height="9"/>
+            <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="1.4">
+              <rect x="2" y="2" width="36" height="22"/><rect x="2" y="2" width="22" height="22"/>
+              <rect x="2" y="2" width="13.5" height="13.5"/><rect x="15.5" y="2" width="8.5" height="8.5"/>
             </svg>
             <span>Golden Ratio</span>
           </div>
@@ -418,7 +540,7 @@
       <div class="panel">
         <div class="panel-title">Paramètres</div>
         <div class="control-row">
-          <label>Taille canvas</label>
+          <label>Canvas</label>
           <input type="range" id="s-canvas" min="200" max="800" value="500" step="10">
           <span class="val" id="v-canvas">500</span>
         </div>
@@ -443,29 +565,23 @@
         <div class="panel-title">Couleurs</div>
         <div class="color-row">
           <label>Ligne principale</label>
-          <div class="swatch" style="background:#a78bfa">
-            <input type="color" id="c-main" value="#a78bfa">
-          </div>
+          <div class="swatch" style="background:#a78bfa"><input type="color" id="c-main" value="#a78bfa"></div>
         </div>
         <div class="color-row">
           <label>Ligne secondaire</label>
-          <div class="swatch" style="background:#4b4b6a">
-            <input type="color" id="c-secondary" value="#4b4b6a">
-          </div>
+          <div class="swatch" style="background:#4b4b6a"><input type="color" id="c-secondary" value="#4b4b6a"></div>
         </div>
         <div class="color-row">
           <label>Fond</label>
-          <div class="swatch" style="background:#141417">
-            <input type="color" id="c-bg" value="#141417">
-          </div>
+          <div class="swatch" style="background:#141417"><input type="color" id="c-bg" value="#141417"></div>
         </div>
       </div>
 
       <div class="panel">
-        <div class="panel-title">Calques visibles</div>
+        <div class="panel-title">Calques</div>
         <div id="layers-base">
           <div class="layer-item">
-            <div class="layer-dot" style="background:#a78bfa"></div>
+            <div class="layer-dot" style="background:#a78bfa; box-shadow:0 0 4px #a78bfa"></div>
             <span class="layer-label">Lignes principales</span>
             <span class="layer-eye" data-layer="main">◉</span>
           </div>
@@ -475,12 +591,12 @@
             <span class="layer-eye" data-layer="secondary">◉</span>
           </div>
           <div class="layer-item">
-            <div class="layer-dot" style="background:#34d399"></div>
+            <div class="layer-dot" style="background:#22d3a5; box-shadow:0 0 4px #22d3a5"></div>
             <span class="layer-label">Cercle d'inscription</span>
             <span class="layer-eye" data-layer="circle">◉</span>
           </div>
           <div class="layer-item">
-            <div class="layer-dot" style="background:#f87171"></div>
+            <div class="layer-dot" style="background:#f06060; box-shadow:0 0 4px #f06060"></div>
             <span class="layer-label">Diagonales</span>
             <span class="layer-eye" data-layer="diag">◉</span>
           </div>
@@ -489,16 +605,15 @@
 
     </div>
 
-    <!-- TAB: LOGO GRID -->
+    <!-- TAB LOGO -->
     <div class="tab-content" id="tab-logo">
 
       <div class="panel">
-        <div class="panel-title">Importer un logo SVG</div>
+        <div class="panel-title">Importer un SVG</div>
         <div class="upload-zone" id="upload-zone">
-          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-            <polyline points="17 8 12 3 7 8"/>
-            <line x1="12" y1="3" x2="12" y2="15"/>
+            <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
           </svg>
           Glisser un fichier SVG ici<br>ou cliquer pour choisir
         </div>
@@ -506,69 +621,33 @@
       </div>
 
       <div class="panel">
-        <div class="panel-title">Composants visibles</div>
-        <div class="toggle-row">
-          <label>Ancres (nœuds)</label>
-          <div class="toggle on" data-comp="anchors"></div>
-        </div>
-        <div class="toggle-row">
-          <label>Poignées Bézier</label>
-          <div class="toggle on" data-comp="handles"></div>
-        </div>
-        <div class="toggle-row">
-          <label>Contours</label>
-          <div class="toggle on" data-comp="outlines"></div>
-        </div>
-        <div class="toggle-row">
-          <label>Grille de construction</label>
-          <div class="toggle on" data-comp="gridlines"></div>
-        </div>
-        <div class="toggle-row">
-          <label>Cercles de courbe</label>
-          <div class="toggle" data-comp="circles"></div>
-        </div>
+        <div class="panel-title">Composants</div>
+        <div class="toggle-row"><label>Ancres (nœuds)</label><div class="toggle on" data-comp="anchors"></div></div>
+        <div class="toggle-row"><label>Poignées Bézier</label><div class="toggle on" data-comp="handles"></div></div>
+        <div class="toggle-row"><label>Contours</label><div class="toggle on" data-comp="outlines"></div></div>
+        <div class="toggle-row"><label>Grille de construction</label><div class="toggle on" data-comp="gridlines"></div></div>
+        <div class="toggle-row"><label>Cercles de courbure</label><div class="toggle" data-comp="circles"></div></div>
       </div>
 
       <div class="panel">
-        <div class="panel-title">Couleurs composants</div>
-        <div class="color-row">
-          <label>Ancres</label>
-          <div class="swatch" style="background:#f87171">
-            <input type="color" id="c-anchors" value="#f87171">
-          </div>
-        </div>
-        <div class="color-row">
-          <label>Poignées</label>
-          <div class="swatch" style="background:#60a5fa">
-            <input type="color" id="c-handles" value="#60a5fa">
-          </div>
-        </div>
-        <div class="color-row">
-          <label>Contours</label>
-          <div class="swatch" style="background:#a78bfa">
-            <input type="color" id="c-outlines" value="#a78bfa">
-          </div>
-        </div>
-        <div class="color-row">
-          <label>Grille</label>
-          <div class="swatch" style="background:#2e2e36">
-            <input type="color" id="c-gridlines" value="#2e2e36">
-          </div>
-        </div>
+        <div class="panel-title">Couleurs</div>
+        <div class="color-row"><label>Ancres</label><div class="swatch" style="background:#f87171"><input type="color" id="c-anchors" value="#f87171"></div></div>
+        <div class="color-row"><label>Poignées</label><div class="swatch" style="background:#60a5fa"><input type="color" id="c-handles" value="#60a5fa"></div></div>
+        <div class="color-row"><label>Contours</label><div class="swatch" style="background:#a78bfa"><input type="color" id="c-outlines" value="#a78bfa"></div></div>
+        <div class="color-row"><label>Grille</label><div class="swatch" style="background:#2e2e36"><input type="color" id="c-gridlines" value="#2e2e36"></div></div>
       </div>
 
     </div>
 
-    <!-- TAB: CLEARSPACE -->
+    <!-- TAB CLEARSPACE -->
     <div class="tab-content" id="tab-clear">
 
       <div class="panel">
         <div class="panel-title">Logo source</div>
         <div class="upload-zone" id="upload-zone-clear">
-          <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-            <polyline points="17 8 12 3 7 8"/>
-            <line x1="12" y1="3" x2="12" y2="15"/>
+            <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
           </svg>
           Glisser un fichier SVG ici<br>ou cliquer pour choisir
         </div>
@@ -576,13 +655,10 @@
       </div>
 
       <div class="panel">
-        <div class="panel-title">Méthode de calcul</div>
-        <div class="toggle-row">
-          <label>Basé sur X-height</label>
-          <div class="toggle on" id="toggle-xheight"></div>
-        </div>
+        <div class="panel-title">Méthode</div>
+        <div class="toggle-row"><label>Basé sur X-height</label><div class="toggle on" id="toggle-xheight"></div></div>
         <div class="control-row" id="xheight-row">
-          <label>X-height (px)</label>
+          <label>X-height</label>
           <input type="range" id="s-xheight" min="4" max="80" value="20">
           <span class="val" id="v-xheight">20</span>
         </div>
@@ -595,23 +671,12 @@
 
       <div class="panel">
         <div class="panel-title">Affichage</div>
-        <div class="toggle-row">
-          <label>Zone d'exclusion</label>
-          <div class="toggle on" data-comp="clearzone"></div>
-        </div>
-        <div class="toggle-row">
-          <label>Cotes / mesures</label>
-          <div class="toggle on" data-comp="dimensions"></div>
-        </div>
-        <div class="toggle-row">
-          <label>Grille de référence</label>
-          <div class="toggle" data-comp="ref-grid"></div>
-        </div>
+        <div class="toggle-row"><label>Zone d'exclusion</label><div class="toggle on" data-comp="clearzone"></div></div>
+        <div class="toggle-row"><label>Cotes / mesures</label><div class="toggle on" data-comp="dimensions"></div></div>
+        <div class="toggle-row"><label>Grille de référence</label><div class="toggle" data-comp="ref-grid"></div></div>
         <div class="color-row">
           <label>Couleur zone</label>
-          <div class="swatch" style="background:#f59e0b">
-            <input type="color" id="c-clear" value="#f59e0b">
-          </div>
+          <div class="swatch" style="background:#f59e0b"><input type="color" id="c-clear" value="#f59e0b"></div>
         </div>
       </div>
 
@@ -619,7 +684,7 @@
 
   </div>
 
-  <!-- CANVAS -->
+  <!-- ═ CANVAS ═ -->
   <div id="canvas-wrap">
     <div id="ruler-corner"></div>
     <div id="ruler-h"></div>
@@ -627,11 +692,11 @@
 
     <svg id="main-svg" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <pattern id="dot-pattern" x="0" y="0" width="24" height="24" patternUnits="userSpaceOnUse">
-          <circle cx="12" cy="12" r="0.5" fill="#2e2e36"/>
+        <pattern id="dot-pattern" x="0" y="0" width="28" height="28" patternUnits="userSpaceOnUse">
+          <circle cx="14" cy="14" r="0.6" fill="rgba(255,255,255,0.04)"/>
         </pattern>
       </defs>
-      <rect width="100%" height="100%" fill="url(#dot-pattern)"/>
+      <rect width="100%" height="100%" fill="url(#dot-pattern)" class="canvas-dots"/>
       <g id="viewport">
         <g id="canvas-bg-rect"></g>
         <g id="layer-base"></g>
@@ -642,16 +707,18 @@
     </svg>
 
     <div id="infobar">
-      <span>Zoom: <b id="info-zoom">100%</b></span>
-      <span>Canvas: <b id="info-size">500×500</b></span>
-      <span>Type: <b id="info-type">Carré</b></span>
+      <span>Zoom <b id="info-zoom">100%</b></span>
+      <span class="dot"></span>
+      <span>Canvas <b id="info-size">500×500</b></span>
+      <span class="dot"></span>
+      <span>Type <b id="info-type">Carré</b></span>
     </div>
 
     <div id="zoom-ctrl">
-      <div class="zoom-btn" id="zoom-out">−</div>
-      <div id="zoom-level">100%</div>
-      <div class="zoom-btn" id="zoom-in">+</div>
-      <div class="zoom-btn" id="zoom-fit" title="Ajuster">⊞</div>
+      <button class="zoom-btn" id="zoom-out">−</button>
+      <span id="zoom-level">100%</span>
+      <button class="zoom-btn" id="zoom-in">+</button>
+      <button class="zoom-btn" id="zoom-fit" title="Ajuster à la fenêtre">⊡</button>
     </div>
   </div>
 
